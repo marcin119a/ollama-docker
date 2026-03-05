@@ -5,11 +5,15 @@ services:
     image: ollama/ollama:latest
     container_name: ollama-t4
     restart: unless-stopped
+
     ports:
       - "11434:11434"
 
     volumes:
       - ollama_data:/root/.ollama
+
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
 
     deploy:
       resources:
@@ -19,17 +23,16 @@ services:
               count: 1
               capabilities: [gpu]
 
-    environment:
-      - OLLAMA_KEEP_ALIVE=24h
+    runtime: nvidia
 
-    command: >
-      bash -c "
+    entrypoint: ["/bin/bash", "-c"]
+
+    command: |
       ollama serve &
-      sleep 10 &&
-      ollama pull qwen2.5:3b &&
-      ollama pull mxbai-embed-large &&
+      sleep 8
+      ollama pull qwen2.5:3b
+      ollama pull mxbai-embed-large
       wait
-      "
 
 volumes:
   ollama_data:

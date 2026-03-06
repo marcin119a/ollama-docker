@@ -27,15 +27,7 @@ services:
               count: 1
               capabilities: [gpu]
 
-    entrypoint: ["/bin/bash", "-c"]
-
-    command: |
-      ollama serve &
-      sleep 10
-      ollama pull qwen2.5:14b
-      ollama pull mxbai-embed-large
-      ollama pull llama3:latest
-      wait
+    command: serve
 
 volumes:
   ollama_data:

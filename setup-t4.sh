@@ -63,3 +63,52 @@ echo "Jeśli nie działa z zewnątrz:"
 echo "1. Sprawdź Security Group (AWS/Brev)"
 echo "2. Otwórz port 11434"
 echo "3. curl http://$IP:11434"
+
+
+echo "=== INSTALL NGINX ==="
+sudo apt install -y nginx
+
+echo "=== CONFIGURE NGINX ==="
+
+DOMAIN="ollama2.letscodeai.eu"
+
+sudo tee /etc/nginx/sites-available/ollama > /dev/null <<EOF
+server {
+    listen 80;
+    server_name $DOMAIN;
+
+    location / {
+        proxy_pass http://localhost:11434;
+        proxy_http_version 1.1;
+
+        proxy_set_header Host \$host;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_read_timeout 600s;
+    }
+}
+EOF
+
+echo "=== ENABLE SITE ==="
+sudo ln -sf /etc/nginx/sites-available/ollama /etc/nginx/sites-enabled/
+
+sudo nginx -t
+sudo systemctl restart nginx
+
+echo "=== OPEN PORT 80 ==="
+if command -v ufw &> /dev/null
+then
+    sudo ufw allow 80/tcp || true
+fi
+
+echo "=== INSTALL CERTBOT ==="
+sudo apt install -y certbot python3-certbot-nginx
+
+echo "=== GENERATE SSL CERT ==="
+sudo certbot --nginx -d $DOMAIN --non-interactive --agree-tos -m your@email.com
+
+echo "=== DONE ==="
+echo "Twoj endpoint:"
+echo "http://$DOMAIN"
+echo "https://$DOMAIN"
